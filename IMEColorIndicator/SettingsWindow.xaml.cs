@@ -42,6 +42,15 @@ public partial class SettingsWindow : Window
         // 初期値を設定
         ChkAutoStart.IsChecked = autoStartEnabled;
         ChkAutoUpdate.IsChecked = settings.AutoUpdate;
+
+        // 言語設定の初期化
+        CmbLanguage.SelectedIndex = settings.Language switch
+        {
+            "Japanese" => 1,
+            "English" => 2,
+            _ => 0 // "Auto"
+        };
+
         ChkShowTop.IsChecked = settings.ShowTopBar;
         ChkShowBottom.IsChecked = settings.ShowBottomBar;
         ChkShowLeft.IsChecked = settings.ShowLeftBar;
@@ -334,5 +343,30 @@ public partial class SettingsWindow : Window
             ImeOnPreview.BorderBrush = System.Windows.Media.Brushes.DodgerBlue;
             ImeOnPreview.BorderThickness = new Thickness(3);
         }
+    }
+
+    private void CmbLanguage_SelectionChanged(object sender, SelectionChangedEventArgs e)
+    {
+        if (CmbLanguage.SelectedItem is ComboBoxItem selectedItem)
+        {
+            var language = selectedItem.Tag?.ToString() ?? "Auto";
+            _settings.Language = language;
+
+            // LocalizationHelperを更新
+            LocalizationHelper.Initialize(_settings);
+
+            // UIテキストを更新（設定画面を閉じて再度開く必要がある）
+            UpdateUITexts();
+        }
+    }
+
+    private void UpdateUITexts()
+    {
+        // ウィンドウタイトルを更新
+        Title = LocalizationHelper.SettingsTitle;
+
+        // チェックボックスのテキストを更新
+        ChkAutoStart.Content = LocalizationHelper.AutoStartLabel;
+        ChkAutoUpdate.Content = LocalizationHelper.AutoUpdateLabel;
     }
 }

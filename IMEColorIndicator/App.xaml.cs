@@ -26,6 +26,7 @@ public partial class App : System.Windows.Application
     public App()
     {
         _settings = Settings.Load();
+        LocalizationHelper.Initialize(_settings);
         _imeOffColor = _settings.GetImeOffColorAsMediaColor();
         _imeOnColor = _settings.GetImeOnColorAsMediaColor();
     }
@@ -180,6 +181,9 @@ public partial class App : System.Windows.Application
             var autoUpdateChanged = _settings.AutoUpdate != _settingsWindow.AutoUpdateEnabled;
             _settings.AutoUpdate = _settingsWindow.AutoUpdateEnabled;
             _settings.Save();
+
+            // 言語設定が変更された場合、LocalizationHelperを更新
+            LocalizationHelper.Initialize(_settings);
 
             if (autoUpdateChanged)
             {

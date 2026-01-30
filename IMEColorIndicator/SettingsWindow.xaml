@@ -170,7 +170,17 @@
             <GroupBox Header="起動設定" Padding="10" Margin="0,0,0,10">
                 <StackPanel>
                     <CheckBox x:Name="ChkAutoStart" Content="Windows起動時に自動起動する" VerticalAlignment="Center" Margin="0,0,0,10"/>
-                    <CheckBox x:Name="ChkAutoUpdate" Content="自動更新を有効にする" VerticalAlignment="Center"/>
+                    <CheckBox x:Name="ChkAutoUpdate" Content="自動更新を有効にする" VerticalAlignment="Center" Margin="0,0,0,10"/>
+
+                    <!-- 言語設定 -->
+                    <StackPanel Orientation="Horizontal">
+                        <TextBlock Text="Language / 言語:" VerticalAlignment="Center" Margin="0,0,10,0" Width="120"/>
+                        <ComboBox x:Name="CmbLanguage" Width="150" SelectedIndex="0" SelectionChanged="CmbLanguage_SelectionChanged">
+                            <ComboBoxItem Content="Auto / 自動" Tag="Auto"/>
+                            <ComboBoxItem Content="日本語 (Japanese)" Tag="Japanese"/>
+                            <ComboBoxItem Content="English" Tag="English"/>
+                        </ComboBox>
+                    </StackPanel>
                 </StackPanel>
             </GroupBox>
         </StackPanel>

@@ -14,12 +14,41 @@ namespace IMEColorIndicator
 
         private const ushort LANG_JAPANESE = 0x0411;
 
-        private static readonly bool IsJapanese = DetectLanguage();
+        private static bool _isJapanese = DetectSystemLanguage();
+        private static Settings? _currentSettings = null;
+
+        /// <summary>
+        /// Settingsを設定（起動時およびSettings変更時に呼び出す）
+        /// </summary>
+        public static void Initialize(Settings settings)
+        {
+            _currentSettings = settings;
+            UpdateLanguage();
+        }
+
+        /// <summary>
+        /// 言語設定を更新
+        /// </summary>
+        private static void UpdateLanguage()
+        {
+            if (_currentSettings == null)
+            {
+                _isJapanese = DetectSystemLanguage();
+                return;
+            }
+
+            _isJapanese = _currentSettings.Language switch
+            {
+                "Japanese" => true,
+                "English" => false,
+                _ => DetectSystemLanguage() // "Auto"の場合
+            };
+        }
 
         /// <summary>
         /// システム言語が日本語かどうかを判定
         /// </summary>
-        private static bool DetectLanguage()
+        private static bool DetectSystemLanguage()
         {
             try
             {
@@ -32,6 +61,11 @@ namespace IMEColorIndicator
                 return CultureInfo.CurrentUICulture.TwoLetterISOLanguageName == "ja";
             }
         }
+
+        /// <summary>
+        /// 現在の言語設定が日本語かどうか
+        /// </summary>
+        private static bool IsJapanese => _isJapanese;
 
         // アプリケーション名
         public static string AppName => IsJapanese ? "IME Color Indicator" : "IME Color Indicator";
@@ -47,8 +81,8 @@ namespace IMEColorIndicator
         public static string SettingsTitle => IsJapanese ? "設定" : "Settings";
         public static string ImeOffColorLabel => IsJapanese ? "IME OFF 時の色:" : "IME OFF Color:";
         public static string ImeOnColorLabel => IsJapanese ? "IME ON 時の色:" : "IME ON Color:";
-        public static string AutoStartLabel => IsJapanese ? "Windows 起動時に自動起動" : "Launch at Windows Startup";
-        public static string AutoUpdateLabel => IsJapanese ? "自動更新:" : "Auto Update:";
+        public static string AutoStartLabel => IsJapanese ? "Windows起動時に自動起動する" : "Launch at Windows Startup";
+        public static string AutoUpdateLabel => IsJapanese ? "自動更新を有効にする" : "Enable Auto Update";
         public static string AutoUpdateEnabled => IsJapanese ? "有効" : "Enabled";
         public static string AutoUpdateDisabled => IsJapanese ? "無効" : "Disabled";
         public static string BarSettingsLabel => IsJapanese ? "バー設定:" : "Bar Settings:";

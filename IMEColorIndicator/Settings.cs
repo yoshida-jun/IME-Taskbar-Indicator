@@ -10,6 +10,7 @@ public class Settings
     public string ImeOnColor { get; set; } = "#32CD32";  // LimeGreen
     public bool AutoStart { get; set; } = false;
     public bool AutoUpdate { get; set; } = false; // 自動更新（デフォルトは無効）
+    public string Language { get; set; } = "Auto"; // 言語設定: "Auto", "Japanese", "English"
 
     // 各辺のバーサイズ
     public int TopBarHeight { get; set; } = 2;     // デフォルト2px
