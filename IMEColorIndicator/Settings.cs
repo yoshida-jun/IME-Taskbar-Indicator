@@ -45,9 +45,10 @@ public class Settings
                 return JsonSerializer.Deserialize<Settings>(json) ?? new Settings();
             }
         }
-        catch
+        catch (Exception ex)
         {
             // エラーが発生した場合はデフォルト設定を返す
+            Logger.LogError("Settings.Load failed", ex);
         }
 
         return new Settings();
@@ -70,9 +71,10 @@ public class Settings
 
             File.WriteAllText(SettingsPath, json);
         }
-        catch
+        catch (Exception ex)
         {
-            // エラーが発生しても無視
+            // エラーが発生してもアプリは継続、ログに記録
+            Logger.LogError("Settings.Save failed", ex);
         }
     }
 

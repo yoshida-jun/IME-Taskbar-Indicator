@@ -82,10 +82,10 @@ public partial class ColorBarWindow : Window
                 break;
             case ScreenEdge.TaskbarTop:
                 var taskbarInfo = TaskbarHelper.GetTaskbarInfo();
-                // タスクバーが画面下端にある場合を想定（タスクバーの内側に表示）
-                Left = 0;
-                Top = screenHeight - taskbarInfo.Height + 60;
-                Width = screenWidth;
+                // タスクバーの上端に表示
+                Left = taskbarInfo.X;
+                Top = taskbarInfo.Y;
+                Width = taskbarInfo.Width;
                 Height = _size;
                 break;
         }
@@ -139,10 +139,10 @@ public partial class ColorBarWindow : Window
                 break;
             case ScreenEdge.TaskbarTop:
                 var taskbarInfo = TaskbarHelper.GetTaskbarInfo();
-                // タスクバーが画面下端にある場合を想定（タスクバーの内側に表示）
-                Left = 0;
-                Top = screenHeight - taskbarInfo.Height + 60;
-                Width = screenWidth;
+                // タスクバーの上端に表示
+                Left = taskbarInfo.X;
+                Top = taskbarInfo.Y;
+                Width = taskbarInfo.Width;
                 Height = _size;
                 break;
         }
@@ -178,5 +178,12 @@ public partial class ColorBarWindow : Window
         {
             SetWindowPos(hwnd, HWND_TOPMOST, 0, 0, 0, 0, SWP_NOMOVE | SWP_NOSIZE | SWP_NOACTIVATE | SWP_SHOWWINDOW);
         }
+    }
+
+    protected override void OnClosed(EventArgs e)
+    {
+        _topmostTimer?.Stop();
+        _topmostTimer = null;
+        base.OnClosed(e);
     }
 }

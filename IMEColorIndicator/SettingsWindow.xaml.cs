@@ -286,8 +286,9 @@ public partial class SettingsWindow : Window
             // バーが存在しない場合は新規作成
             if (_colorBars[4] == null && _settings.TaskbarTopBarHeight > 0)
             {
-                _colorBars[4] = new ColorBarWindow(ScreenEdge.TaskbarTop, _settings.TaskbarTopBarHeight);
-                _colorBars[4].SetColor(ImeOffColor);
+                var bar = new ColorBarWindow(ScreenEdge.TaskbarTop, _settings.TaskbarTopBarHeight);
+                bar.SetColor(ImeOffColor);
+                _colorBars[4] = bar;
             }
 
             // バーを表示
@@ -347,6 +348,9 @@ public partial class SettingsWindow : Window
 
     private void CmbLanguage_SelectionChanged(object sender, SelectionChangedEventArgs e)
     {
+        // 初期化中は処理をスキップ
+        if (_settings == null) return;
+
         if (CmbLanguage.SelectedItem is ComboBoxItem selectedItem)
         {
             var language = selectedItem.Tag?.ToString() ?? "Auto";

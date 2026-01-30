@@ -8,7 +8,7 @@ using System.Threading.Tasks;
 
 namespace IMEColorIndicator
 {
-    public class Updater
+    public class Updater : IDisposable
     {
         // GitHub リポジトリ情報（必要に応じて変更してください）
         private const string REPO_OWNER = "yoshida-jun";  // TODO: 実際のリポジトリオーナーに変更
