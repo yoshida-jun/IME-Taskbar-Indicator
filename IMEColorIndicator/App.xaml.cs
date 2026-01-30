@@ -77,8 +77,16 @@ public partial class App : System.Windows.Application
         // 自動アップデートチェッカーを起動（設定で有効な場合のみ）
         if (_settings.AutoUpdate)
         {
-            _updater = new Updater();
-            _updater.StartBackgroundChecker();
+            try
+            {
+                _updater = new Updater();
+                _updater.StartBackgroundChecker();
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"自動更新の起動に失敗しました: {ex.Message}");
+                // 更新機能が失敗してもアプリは継続
+            }
         }
     }
 
@@ -195,8 +203,15 @@ public partial class App : System.Windows.Application
                 // 自動更新が有効になった場合は起動
                 if (_settings.AutoUpdate)
                 {
-                    _updater = new Updater();
-                    _updater.StartBackgroundChecker();
+                    try
+                    {
+                        _updater = new Updater();
+                        _updater.StartBackgroundChecker();
+                    }
+                    catch (Exception ex)
+                    {
+                        System.Diagnostics.Debug.WriteLine($"自動更新の起動に失敗しました: {ex.Message}");
+                    }
                 }
             }
 

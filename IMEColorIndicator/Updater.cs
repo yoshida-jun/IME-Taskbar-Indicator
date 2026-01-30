@@ -27,7 +27,10 @@ namespace IMEColorIndicator
 
         public Updater()
         {
-            _exePath = Process.GetCurrentProcess().MainModule?.FileName ?? throw new InvalidOperationException("実行ファイルパスを取得できませんでした");
+            // single-file publish対応: Environment.ProcessPathを使用
+            _exePath = Environment.ProcessPath ??
+                       Process.GetCurrentProcess().MainModule?.FileName ??
+                       throw new InvalidOperationException("実行ファイルパスを取得できませんでした");
             _currentVersion = Assembly.GetExecutingAssembly().GetName().Version?.ToString(3) ?? "0.0.0";
             _httpClient = new HttpClient { Timeout = TimeSpan.FromSeconds(30) };
         }
