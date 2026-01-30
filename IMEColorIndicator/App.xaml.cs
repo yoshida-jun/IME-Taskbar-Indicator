@@ -80,6 +80,13 @@ public partial class App : System.Windows.Application
             try
             {
                 _updater = new Updater();
+
+                // 更新イベントをサブスクライブ
+                _updater.UpdateAvailable += OnUpdateAvailable;
+                _updater.UpdateDownloading += OnUpdateDownloading;
+                _updater.UpdateApplying += OnUpdateApplying;
+                _updater.UpdateFailed += OnUpdateFailed;
+
                 _updater.StartBackgroundChecker();
             }
             catch (Exception ex)
@@ -206,6 +213,13 @@ public partial class App : System.Windows.Application
                     try
                     {
                         _updater = new Updater();
+
+                        // 更新イベントをサブスクライブ
+                        _updater.UpdateAvailable += OnUpdateAvailable;
+                        _updater.UpdateDownloading += OnUpdateDownloading;
+                        _updater.UpdateApplying += OnUpdateApplying;
+                        _updater.UpdateFailed += OnUpdateFailed;
+
                         _updater.StartBackgroundChecker();
                     }
                     catch (Exception ex)
@@ -235,5 +249,58 @@ public partial class App : System.Windows.Application
         _notifyIcon?.Dispose();
         DestroyColorBars();
         base.OnExit(e);
+    }
+
+    // 更新イベントハンドラー
+    private void OnUpdateAvailable(object? sender, string version)
+    {
+        Dispatcher.Invoke(() =>
+        {
+            _notifyIcon?.ShowBalloonTip(
+                3000,
+                "IME Color Indicator",
+                $"{LocalizationHelper.UpdateAvailable}: v{version}",
+                ToolTipIcon.Info
+            );
+        });
+    }
+
+    private void OnUpdateDownloading(object? sender, EventArgs e)
+    {
+        Dispatcher.Invoke(() =>
+        {
+            _notifyIcon?.ShowBalloonTip(
+                3000,
+                "IME Color Indicator",
+                LocalizationHelper.UpdateDownloading,
+                ToolTipIcon.Info
+            );
+        });
+    }
+
+    private void OnUpdateApplying(object? sender, EventArgs e)
+    {
+        Dispatcher.Invoke(() =>
+        {
+            _notifyIcon?.ShowBalloonTip(
+                3000,
+                "IME Color Indicator",
+                LocalizationHelper.UpdateInstalling,
+                ToolTipIcon.Info
+            );
+        });
+    }
+
+    private void OnUpdateFailed(object? sender, string error)
+    {
+        Dispatcher.Invoke(() =>
+        {
+            _notifyIcon?.ShowBalloonTip(
+                5000,
+                "IME Color Indicator",
+                $"{LocalizationHelper.UpdateFailed}: {error}",
+                ToolTipIcon.Error
+            );
+        });
     }
 }

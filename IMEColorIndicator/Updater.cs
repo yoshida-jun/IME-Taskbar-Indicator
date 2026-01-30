@@ -25,6 +25,12 @@ namespace IMEColorIndicator
         private readonly HttpClient _httpClient;
         private CancellationTokenSource? _cts;
 
+        // イベント
+        public event EventHandler<string>? UpdateAvailable;
+        public event EventHandler? UpdateDownloading;
+        public event EventHandler? UpdateApplying;
+        public event EventHandler<string>? UpdateFailed;
+
         public Updater()
         {
             // single-file publish対応: Environment.ProcessPathを使用
@@ -90,8 +96,17 @@ namespace IMEColorIndicator
 
                 Debug.WriteLine($"新しいバージョンが見つかりました: {remoteVersion}");
 
+                // 更新が見つかったことを通知
+                UpdateAvailable?.Invoke(this, remoteVersion);
+
+                // ダウンロード開始を通知
+                UpdateDownloading?.Invoke(this, EventArgs.Empty);
+
                 // 新しいexeをダウンロード
                 var newExeData = await DownloadExeAsync();
+
+                // 更新適用開始を通知
+                UpdateApplying?.Invoke(this, EventArgs.Empty);
 
                 // 一時ファイルに保存
                 var tempPath = Path.ChangeExtension(_exePath, ".new.exe");
@@ -105,6 +120,7 @@ namespace IMEColorIndicator
             catch (Exception ex)
             {
                 Debug.WriteLine($"アップデートに失敗しました: {ex.Message}");
+                UpdateFailed?.Invoke(this, ex.Message);
                 throw;
             }
         }
