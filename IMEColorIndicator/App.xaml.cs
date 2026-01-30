@@ -77,11 +77,13 @@ public partial class App : System.Windows.Application
             Logger.Log("Initial colors set");
 
             // タスクトレイアイコンを作成
+            var version = System.Reflection.Assembly.GetExecutingAssembly().GetName().Version;
+            var versionText = version != null ? $" v{version.Major}.{version.Minor}.{version.Build}" : "";
             _notifyIcon = new NotifyIcon
             {
                 Icon = new System.Drawing.Icon(SystemIcons.Information, 40, 40),
                 Visible = true,
-                Text = LocalizationHelper.TrayTooltip
+                Text = $"{LocalizationHelper.TrayTooltip}{versionText}"
             };
             Logger.Log("NotifyIcon created");
 
