@@ -25,75 +25,101 @@ public partial class App : System.Windows.Application
 
     public App()
     {
-        _settings = Settings.Load();
-        LocalizationHelper.Initialize(_settings);
-        _imeOffColor = _settings.GetImeOffColorAsMediaColor();
-        _imeOnColor = _settings.GetImeOnColorAsMediaColor();
+        try
+        {
+            _settings = Settings.Load();
+            LocalizationHelper.Initialize(_settings);
+            _imeOffColor = _settings.GetImeOffColorAsMediaColor();
+            _imeOnColor = _settings.GetImeOnColorAsMediaColor();
+        }
+        catch (Exception ex)
+        {
+            System.Windows.MessageBox.Show(
+                $"初期化エラー: {ex.Message}\n\n{ex.StackTrace}",
+                "IME Color Indicator - エラー",
+                System.Windows.MessageBoxButton.OK,
+                System.Windows.MessageBoxImage.Error
+            );
+            Environment.Exit(1);
+        }
     }
 
     protected override void OnStartup(StartupEventArgs e)
     {
         base.OnStartup(e);
 
-        // タスクトレイ常駐アプリなので、明示的にShutdownを呼ぶまで終了しない
-        ShutdownMode = ShutdownMode.OnExplicitShutdown;
-
-        // カラーバーウィンドウを作成
-        CreateColorBars();
-
-        // IME監視を開始
-        _imeMonitor = new ImeMonitor();
-        _imeMonitor.ImeStateChanged += OnImeStateChanged;
-        _imeMonitor.Start();
-
-        // 初期色を設定
-        SetAllBarsColor(_imeOffColor);
-
-        // タスクトレイアイコンを作成
-        _notifyIcon = new NotifyIcon
+        try
         {
-            Icon = new System.Drawing.Icon(SystemIcons.Information, 40, 40),
-            Visible = true,
-            Text = LocalizationHelper.TrayTooltip
-        };
+            // タスクトレイ常駐アプリなので、明示的にShutdownを呼ぶまで終了しない
+            ShutdownMode = ShutdownMode.OnExplicitShutdown;
 
-        // 左クリックで設定画面を開く
-        _notifyIcon.Click += (s, args) =>
+            // カラーバーウィンドウを作成
+            CreateColorBars();
+
+            // IME監視を開始
+            _imeMonitor = new ImeMonitor();
+            _imeMonitor.ImeStateChanged += OnImeStateChanged;
+            _imeMonitor.Start();
+
+            // 初期色を設定
+            SetAllBarsColor(_imeOffColor);
+
+            // タスクトレイアイコンを作成
+            _notifyIcon = new NotifyIcon
+            {
+                Icon = new System.Drawing.Icon(SystemIcons.Information, 40, 40),
+                Visible = true,
+                Text = LocalizationHelper.TrayTooltip
+            };
+
+            // 左クリックで設定画面を開く
+            _notifyIcon.Click += (s, args) =>
+            {
+                if (args is MouseEventArgs mouseArgs && mouseArgs.Button == MouseButtons.Left)
+                {
+                    ShowSettings();
+                }
+            };
+
+            // 右クリックメニューを作成
+            var contextMenu = new ContextMenuStrip();
+            contextMenu.Items.Add(LocalizationHelper.MenuSettings, null, (s, args) => ShowSettings());
+            contextMenu.Items.Add(new ToolStripSeparator());
+            contextMenu.Items.Add(LocalizationHelper.MenuExit, null, (s, args) => Shutdown());
+
+            _notifyIcon.ContextMenuStrip = contextMenu;
+
+            // 自動アップデートチェッカーを起動（設定で有効な場合のみ）
+            if (_settings.AutoUpdate)
+            {
+                try
+                {
+                    _updater = new Updater();
+
+                    // 更新イベントをサブスクライブ
+                    _updater.UpdateAvailable += OnUpdateAvailable;
+                    _updater.UpdateDownloading += OnUpdateDownloading;
+                    _updater.UpdateApplying += OnUpdateApplying;
+                    _updater.UpdateFailed += OnUpdateFailed;
+
+                    _updater.StartBackgroundChecker();
+                }
+                catch (Exception ex)
+                {
+                    System.Diagnostics.Debug.WriteLine($"自動更新の起動に失敗しました: {ex.Message}");
+                    // 更新機能が失敗してもアプリは継続
+                }
+            }
+        }
+        catch (Exception ex)
         {
-            if (args is MouseEventArgs mouseArgs && mouseArgs.Button == MouseButtons.Left)
-            {
-                ShowSettings();
-            }
-        };
-
-        // 右クリックメニューを作成
-        var contextMenu = new ContextMenuStrip();
-        contextMenu.Items.Add(LocalizationHelper.MenuSettings, null, (s, args) => ShowSettings());
-        contextMenu.Items.Add(new ToolStripSeparator());
-        contextMenu.Items.Add(LocalizationHelper.MenuExit, null, (s, args) => Shutdown());
-
-        _notifyIcon.ContextMenuStrip = contextMenu;
-
-        // 自動アップデートチェッカーを起動（設定で有効な場合のみ）
-        if (_settings.AutoUpdate)
-        {
-            try
-            {
-                _updater = new Updater();
-
-                // 更新イベントをサブスクライブ
-                _updater.UpdateAvailable += OnUpdateAvailable;
-                _updater.UpdateDownloading += OnUpdateDownloading;
-                _updater.UpdateApplying += OnUpdateApplying;
-                _updater.UpdateFailed += OnUpdateFailed;
-
-                _updater.StartBackgroundChecker();
-            }
-            catch (Exception ex)
-            {
-                System.Diagnostics.Debug.WriteLine($"自動更新の起動に失敗しました: {ex.Message}");
-                // 更新機能が失敗してもアプリは継続
-            }
+            System.Windows.MessageBox.Show(
+                $"起動エラー: {ex.Message}\n\n{ex.StackTrace}",
+                "IME Color Indicator - エラー",
+                System.Windows.MessageBoxButton.OK,
+                System.Windows.MessageBoxImage.Error
+            );
+            Shutdown();
         }
     }
 

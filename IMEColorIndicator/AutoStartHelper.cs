@@ -32,7 +32,11 @@ public static class AutoStartHelper
 
             if (enable)
             {
-                var exePath = Assembly.GetExecutingAssembly().Location.Replace(".dll", ".exe");
+                // single-file publish対応: Environment.ProcessPathを使用
+                var exePath = Environment.ProcessPath ??
+                              Assembly.GetExecutingAssembly().Location.Replace(".dll", ".exe");
+                if (string.IsNullOrEmpty(exePath)) return;
+
                 key.SetValue(AppName, $"\"{exePath}\"");
             }
             else
