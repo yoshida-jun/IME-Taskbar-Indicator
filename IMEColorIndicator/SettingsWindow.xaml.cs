@@ -222,25 +222,89 @@ public partial class SettingsWindow : Window
 
     private void ChkShowTop_CheckedChanged(object sender, RoutedEventArgs e)
     {
+        if (_settings == null || _colorBars == null) return;
         _settings.ShowTopBar = ChkShowTop.IsChecked ?? true;
+
+        if (_settings.ShowTopBar)
+        {
+            if (_colorBars[0] == null && _settings.TopBarHeight > 0)
+            {
+                var bar = new ColorBarWindow(ScreenEdge.Top, _settings.TopBarHeight);
+                bar.SetColor(ImeOffColor);
+                _colorBars[0] = bar;
+            }
+            _colorBars[0]?.Show();
+        }
+        else
+        {
+            _colorBars[0]?.Hide();
+        }
         UpdateDisplayPreview();
     }
 
     private void ChkShowBottom_CheckedChanged(object sender, RoutedEventArgs e)
     {
+        if (_settings == null || _colorBars == null) return;
         _settings.ShowBottomBar = ChkShowBottom.IsChecked ?? true;
+
+        if (_settings.ShowBottomBar)
+        {
+            if (_colorBars[1] == null && _settings.BottomBarHeight > 0)
+            {
+                var bar = new ColorBarWindow(ScreenEdge.Bottom, _settings.BottomBarHeight);
+                bar.SetColor(ImeOffColor);
+                _colorBars[1] = bar;
+            }
+            _colorBars[1]?.Show();
+        }
+        else
+        {
+            _colorBars[1]?.Hide();
+        }
         UpdateDisplayPreview();
     }
 
     private void ChkShowLeft_CheckedChanged(object sender, RoutedEventArgs e)
     {
+        if (_settings == null || _colorBars == null) return;
         _settings.ShowLeftBar = ChkShowLeft.IsChecked ?? true;
+
+        if (_settings.ShowLeftBar)
+        {
+            if (_colorBars[2] == null && _settings.LeftBarWidth > 0)
+            {
+                var bar = new ColorBarWindow(ScreenEdge.Left, _settings.LeftBarWidth);
+                bar.SetColor(ImeOffColor);
+                _colorBars[2] = bar;
+            }
+            _colorBars[2]?.Show();
+        }
+        else
+        {
+            _colorBars[2]?.Hide();
+        }
         UpdateDisplayPreview();
     }
 
     private void ChkShowRight_CheckedChanged(object sender, RoutedEventArgs e)
     {
+        if (_settings == null || _colorBars == null) return;
         _settings.ShowRightBar = ChkShowRight.IsChecked ?? true;
+
+        if (_settings.ShowRightBar)
+        {
+            if (_colorBars[3] == null && _settings.RightBarWidth > 0)
+            {
+                var bar = new ColorBarWindow(ScreenEdge.Right, _settings.RightBarWidth);
+                bar.SetColor(ImeOffColor);
+                _colorBars[3] = bar;
+            }
+            _colorBars[3]?.Show();
+        }
+        else
+        {
+            _colorBars[3]?.Hide();
+        }
         UpdateDisplayPreview();
     }
 
@@ -278,6 +342,7 @@ public partial class SettingsWindow : Window
 
     private void ChkShowTaskbarTop_CheckedChanged(object sender, RoutedEventArgs e)
     {
+        if (_settings == null || _colorBars == null) return;
         _settings.ShowTaskbarTopBar = ChkShowTaskbarTop.IsChecked ?? false;
 
         // リアルタイムでバーを表示/非表示
