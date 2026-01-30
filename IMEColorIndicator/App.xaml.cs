@@ -27,15 +27,20 @@ public partial class App : System.Windows.Application
     {
         try
         {
+            Logger.Log("===== App constructor started =====");
             _settings = Settings.Load();
+            Logger.Log("Settings loaded");
             LocalizationHelper.Initialize(_settings);
+            Logger.Log("LocalizationHelper initialized");
             _imeOffColor = _settings.GetImeOffColorAsMediaColor();
             _imeOnColor = _settings.GetImeOnColorAsMediaColor();
+            Logger.Log("App constructor completed successfully");
         }
         catch (Exception ex)
         {
+            Logger.LogError("App constructor failed", ex);
             System.Windows.MessageBox.Show(
-                $"初期化エラー: {ex.Message}\n\n{ex.StackTrace}",
+                $"初期化エラー: {ex.Message}\n\nログ: {Logger.GetLogPath()}\n\n{ex.StackTrace}",
                 "IME Color Indicator - エラー",
                 System.Windows.MessageBoxButton.OK,
                 System.Windows.MessageBoxImage.Error
@@ -50,19 +55,26 @@ public partial class App : System.Windows.Application
 
         try
         {
+            Logger.Log("===== OnStartup started =====");
             // タスクトレイ常駐アプリなので、明示的にShutdownを呼ぶまで終了しない
             ShutdownMode = ShutdownMode.OnExplicitShutdown;
+            Logger.Log("ShutdownMode set");
 
             // カラーバーウィンドウを作成
             CreateColorBars();
+            Logger.Log("ColorBars created");
 
             // IME監視を開始
             _imeMonitor = new ImeMonitor();
+            Logger.Log("ImeMonitor instance created");
             _imeMonitor.ImeStateChanged += OnImeStateChanged;
+            Logger.Log("ImeStateChanged event subscribed");
             _imeMonitor.Start();
+            Logger.Log("ImeMonitor started");
 
             // 初期色を設定
             SetAllBarsColor(_imeOffColor);
+            Logger.Log("Initial colors set");
 
             // タスクトレイアイコンを作成
             _notifyIcon = new NotifyIcon
@@ -71,6 +83,7 @@ public partial class App : System.Windows.Application
                 Visible = true,
                 Text = LocalizationHelper.TrayTooltip
             };
+            Logger.Log("NotifyIcon created");
 
             // 左クリックで設定画面を開く
             _notifyIcon.Click += (s, args) =>
@@ -80,6 +93,7 @@ public partial class App : System.Windows.Application
                     ShowSettings();
                 }
             };
+            Logger.Log("NotifyIcon Click event subscribed");
 
             // 右クリックメニューを作成
             var contextMenu = new ContextMenuStrip();
@@ -88,12 +102,14 @@ public partial class App : System.Windows.Application
             contextMenu.Items.Add(LocalizationHelper.MenuExit, null, (s, args) => Shutdown());
 
             _notifyIcon.ContextMenuStrip = contextMenu;
+            Logger.Log("Context menu created");
 
             // 自動アップデートチェッカーを起動（設定で有効な場合のみ）
             if (_settings.AutoUpdate)
             {
                 try
                 {
+                    Logger.Log("Starting auto-updater (AutoUpdate enabled)");
                     _updater = new Updater();
 
                     // 更新イベントをサブスクライブ
@@ -103,18 +119,26 @@ public partial class App : System.Windows.Application
                     _updater.UpdateFailed += OnUpdateFailed;
 
                     _updater.StartBackgroundChecker();
+                    Logger.Log("Auto-updater started");
                 }
                 catch (Exception ex)
                 {
-                    System.Diagnostics.Debug.WriteLine($"自動更新の起動に失敗しました: {ex.Message}");
+                    Logger.LogError("Auto-updater failed to start", ex);
                     // 更新機能が失敗してもアプリは継続
                 }
             }
+            else
+            {
+                Logger.Log("Auto-updater disabled");
+            }
+
+            Logger.Log("OnStartup completed successfully");
         }
         catch (Exception ex)
         {
+            Logger.LogError("OnStartup failed", ex);
             System.Windows.MessageBox.Show(
-                $"起動エラー: {ex.Message}\n\n{ex.StackTrace}",
+                $"起動エラー: {ex.Message}\n\nログ: {Logger.GetLogPath()}\n\n{ex.StackTrace}",
                 "IME Color Indicator - エラー",
                 System.Windows.MessageBoxButton.OK,
                 System.Windows.MessageBoxImage.Error
