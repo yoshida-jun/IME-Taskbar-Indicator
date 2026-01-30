@@ -11,6 +11,7 @@ public partial class SettingsWindow : Window
     public System.Windows.Media.Color ImeOffColor { get; private set; }
     public System.Windows.Media.Color ImeOnColor { get; private set; }
     public bool AutoStartEnabled { get; private set; }
+    public bool AutoUpdateEnabled { get; private set; }
 
     private enum ColorTarget
     {
@@ -34,11 +35,13 @@ public partial class SettingsWindow : Window
         ImeOffColor = currentOffColor;
         ImeOnColor = currentOnColor;
         AutoStartEnabled = autoStartEnabled;
+        AutoUpdateEnabled = settings.AutoUpdate;
         _settings = settings;
         _colorBars = colorBars;
 
         // 初期値を設定
         ChkAutoStart.IsChecked = autoStartEnabled;
+        ChkAutoUpdate.IsChecked = settings.AutoUpdate;
         ChkShowTop.IsChecked = settings.ShowTopBar;
         ChkShowBottom.IsChecked = settings.ShowBottomBar;
         ChkShowLeft.IsChecked = settings.ShowLeftBar;
@@ -59,6 +62,7 @@ public partial class SettingsWindow : Window
         Closing += (s, e) =>
         {
             AutoStartEnabled = ChkAutoStart.IsChecked ?? false;
+            AutoUpdateEnabled = ChkAutoUpdate.IsChecked ?? false;
             AutoStartHelper.SetAutoStart(AutoStartEnabled);
         };
     }

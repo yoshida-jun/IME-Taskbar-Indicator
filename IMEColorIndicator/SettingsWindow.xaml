@@ -168,7 +168,10 @@
 
             <!-- 自動起動設定 -->
             <GroupBox Header="起動設定" Padding="10" Margin="0,0,0,10">
-                <CheckBox x:Name="ChkAutoStart" Content="Windows起動時に自動起動する" VerticalAlignment="Center"/>
+                <StackPanel>
+                    <CheckBox x:Name="ChkAutoStart" Content="Windows起動時に自動起動する" VerticalAlignment="Center" Margin="0,0,0,10"/>
+                    <CheckBox x:Name="ChkAutoUpdate" Content="自動更新を有効にする" VerticalAlignment="Center"/>
+                </StackPanel>
             </GroupBox>
         </StackPanel>
     </ScrollViewer>

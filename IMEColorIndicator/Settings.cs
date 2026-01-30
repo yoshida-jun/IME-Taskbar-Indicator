@@ -9,6 +9,7 @@ public class Settings
     public string ImeOffColor { get; set; } = "#1E90FF"; // DodgerBlue
     public string ImeOnColor { get; set; } = "#32CD32";  // LimeGreen
     public bool AutoStart { get; set; } = false;
+    public bool AutoUpdate { get; set; } = false; // 自動更新（デフォルトは無効）
 
     // 各辺のバーサイズ
     public int TopBarHeight { get; set; } = 2;     // デフォルト2px

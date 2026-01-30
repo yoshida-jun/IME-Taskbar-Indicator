@@ -53,7 +53,7 @@ public partial class App : System.Windows.Application
         {
             Icon = new System.Drawing.Icon(SystemIcons.Information, 40, 40),
             Visible = true,
-            Text = "IME Color Indicator"
+            Text = LocalizationHelper.TrayTooltip
         };
 
         // 左クリックで設定画面を開く
@@ -67,15 +67,18 @@ public partial class App : System.Windows.Application
 
         // 右クリックメニューを作成
         var contextMenu = new ContextMenuStrip();
-        contextMenu.Items.Add("設定", null, (s, args) => ShowSettings());
+        contextMenu.Items.Add(LocalizationHelper.MenuSettings, null, (s, args) => ShowSettings());
         contextMenu.Items.Add(new ToolStripSeparator());
-        contextMenu.Items.Add("終了", null, (s, args) => Shutdown());
+        contextMenu.Items.Add(LocalizationHelper.MenuExit, null, (s, args) => Shutdown());
 
         _notifyIcon.ContextMenuStrip = contextMenu;
 
-        // 自動アップデートチェッカーを起動
-        _updater = new Updater();
-        _updater.StartBackgroundChecker();
+        // 自動アップデートチェッカーを起動（設定で有効な場合のみ）
+        if (_settings.AutoUpdate)
+        {
+            _updater = new Updater();
+            _updater.StartBackgroundChecker();
+        }
     }
 
     private void CreateColorBars()
@@ -172,7 +175,26 @@ public partial class App : System.Windows.Application
             _settings.SetImeOffColor(_imeOffColor);
             _settings.SetImeOnColor(_imeOnColor);
             _settings.AutoStart = _settingsWindow.AutoStartEnabled;
+
+            // 自動更新設定が変更された場合、Updaterを再起動
+            var autoUpdateChanged = _settings.AutoUpdate != _settingsWindow.AutoUpdateEnabled;
+            _settings.AutoUpdate = _settingsWindow.AutoUpdateEnabled;
             _settings.Save();
+
+            if (autoUpdateChanged)
+            {
+                // Updaterを停止
+                _updater?.StopBackgroundChecker();
+                _updater?.Dispose();
+                _updater = null;
+
+                // 自動更新が有効になった場合は起動
+                if (_settings.AutoUpdate)
+                {
+                    _updater = new Updater();
+                    _updater.StartBackgroundChecker();
+                }
+            }
 
             // バーを再作成
             DestroyColorBars();
