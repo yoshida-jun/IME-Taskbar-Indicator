@@ -105,3 +105,10 @@ ServiceFabricBackup/
 
 # Node modules (if any)
 node_modules/
+
+# Publish output
+publish/
+
+# Update files
+*.new.exe
+*.update.bat

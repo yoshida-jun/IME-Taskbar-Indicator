@@ -17,6 +17,7 @@ public partial class App : System.Windows.Application
     private ImeMonitor? _imeMonitor;
     private Settings _settings;
     private SettingsWindow? _settingsWindow;
+    private Updater? _updater;
 
     // 現在の色設定
     private System.Windows.Media.Color _imeOffColor;
@@ -71,6 +72,10 @@ public partial class App : System.Windows.Application
         contextMenu.Items.Add("終了", null, (s, args) => Shutdown());
 
         _notifyIcon.ContextMenuStrip = contextMenu;
+
+        // 自動アップデートチェッカーを起動
+        _updater = new Updater();
+        _updater.StartBackgroundChecker();
     }
 
     private void CreateColorBars()
@@ -184,6 +189,8 @@ public partial class App : System.Windows.Application
     protected override void OnExit(ExitEventArgs e)
     {
         _imeMonitor?.Stop();
+        _updater?.StopBackgroundChecker();
+        _updater?.Dispose();
         _notifyIcon?.Dispose();
         DestroyColorBars();
         base.OnExit(e);

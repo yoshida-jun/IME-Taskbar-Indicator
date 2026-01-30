@@ -1,0 +1,42 @@
+name: Build and Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: windows-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '10.0.x'
+
+      - name: Restore dependencies
+        run: dotnet restore IMEColorIndicator/IMEColorIndicator.csproj
+
+      - name: Build
+        run: dotnet build IMEColorIndicator/IMEColorIndicator.csproj -c Release --no-restore
+
+      - name: Publish
+        run: dotnet publish IMEColorIndicator/IMEColorIndicator.csproj -c Release -r win-x64 --self-contained true -p:PublishSingleFile=true -p:PublishTrimmed=false --no-build -o ./publish
+
+      - name: Create version.txt
+        run: |
+          $version = "${{ github.ref_name }}".TrimStart('v')
+          $version | Out-File -FilePath version.txt -NoNewline -Encoding ascii
+
+      - name: Upload Release
+        uses: softprops/action-gh-release@v1
+        with:
+          files: |
+            publish/IMEColorIndicator.exe
+            version.txt
