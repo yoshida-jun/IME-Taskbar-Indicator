@@ -27,7 +27,7 @@ jobs:
         run: dotnet build IMEColorIndicator/IMEColorIndicator.csproj -c Release --no-restore
 
       - name: Publish
-        run: dotnet publish IMEColorIndicator/IMEColorIndicator.csproj -c Release -r win-x64 --self-contained true -p:PublishSingleFile=true -p:PublishTrimmed=false --no-build -o ./publish
+        run: dotnet publish IMEColorIndicator/IMEColorIndicator.csproj -c Release -r win-x64 --self-contained true -p:PublishSingleFile=true -p:PublishTrimmed=false -o ./publish
 
       - name: Create version.txt
         run: |
