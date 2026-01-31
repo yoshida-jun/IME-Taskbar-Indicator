@@ -2,6 +2,7 @@ using System.Runtime.InteropServices;
 using System.Windows;
 using System.Windows.Interop;
 using System.Windows.Threading;
+using Microsoft.Win32;
 
 namespace IMEColorIndicator;
 
@@ -45,6 +46,19 @@ public partial class ColorBarWindow : Window
         _size = size;
         SetupWindow();
         StartTopmostTimer();
+
+        // 解像度変更を監視
+        SystemEvents.DisplaySettingsChanged += OnDisplaySettingsChanged;
+    }
+
+    private void OnDisplaySettingsChanged(object? sender, EventArgs e)
+    {
+        // UIスレッドで実行
+        Dispatcher.BeginInvoke(() =>
+        {
+            Logger.Log($"[ColorBarWindow] 解像度変更を検出: 再配置します");
+            SetSize(_size);
+        });
     }
 
     private void SetupWindow()
@@ -184,6 +198,7 @@ public partial class ColorBarWindow : Window
     {
         _topmostTimer?.Stop();
         _topmostTimer = null;
+        SystemEvents.DisplaySettingsChanged -= OnDisplaySettingsChanged;
         base.OnClosed(e);
     }
 }

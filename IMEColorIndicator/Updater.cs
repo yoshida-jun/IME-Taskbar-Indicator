@@ -144,8 +144,12 @@ namespace IMEColorIndicator
         {
             try
             {
+                Logger.Log($"[Updater] バージョン比較開始: 現在='{_currentVersion}', リモート='{remoteVersion}'");
+
                 var currentParts = _currentVersion.Split('.');
                 var remoteParts = remoteVersion.Split('.');
+
+                Logger.Log($"[Updater] 分割結果: 現在=[{string.Join(",", currentParts)}], リモート=[{string.Join(",", remoteParts)}]");
 
                 for (int i = 0; i < Math.Min(3, Math.Min(currentParts.Length, remoteParts.Length)); i++)
                 {
@@ -154,16 +158,26 @@ namespace IMEColorIndicator
                     if (!int.TryParse(remoteParts[i], out int remote))
                         remote = 0;
 
+                    Logger.Log($"[Updater] 比較 [{i}]: current={current}, remote={remote}");
+
                     if (remote > current)
+                    {
+                        Logger.Log($"[Updater] 結果: 新しいバージョンあり (remote > current)");
                         return true;
+                    }
                     if (remote < current)
+                    {
+                        Logger.Log($"[Updater] 結果: 現在が新しい (remote < current)");
                         return false;
+                    }
                 }
 
+                Logger.Log($"[Updater] 結果: 同じバージョン");
                 return false;
             }
-            catch
+            catch (Exception ex)
             {
+                Logger.LogError("[Updater] バージョン比較エラー", ex);
                 return false;
             }
         }

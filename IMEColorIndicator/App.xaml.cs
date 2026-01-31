@@ -78,14 +78,22 @@ public partial class App : System.Windows.Application
 
             // タスクトレイアイコンを作成
             var version = System.Reflection.Assembly.GetExecutingAssembly().GetName().Version;
-            var versionText = version != null ? $" v{version.Major}.{version.Minor}.{version.Build}" : "";
+            var versionText = "";
+            if (version != null)
+            {
+                var versionNumber = $"v{version.Major}.{version.Minor}.{version.Build}";
+                // Single-file publish（GitHub版）の場合、Locationは空文字列になる
+                var isPublished = string.IsNullOrEmpty(System.Reflection.Assembly.GetExecutingAssembly().Location);
+                var buildType = isPublished ? "" : "-dev";
+                versionText = $" {versionNumber}{buildType}";
+            }
             _notifyIcon = new NotifyIcon
             {
                 Icon = new System.Drawing.Icon(SystemIcons.Information, 40, 40),
                 Visible = true,
                 Text = $"{LocalizationHelper.TrayTooltip}{versionText}"
             };
-            Logger.Log("NotifyIcon created");
+            Logger.Log($"NotifyIcon created with version: {versionText}");
 
             // 左クリックで設定画面を開く
             _notifyIcon.Click += (s, args) =>
