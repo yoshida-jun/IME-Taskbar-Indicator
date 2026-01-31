@@ -14,14 +14,22 @@ public partial class App : System.Windows.Application
     private ColorBarWindow? _leftBar;
     private ColorBarWindow? _rightBar;
     private ColorBarWindow? _taskbarTopBar;
+    private List<ColorBarWindow> _secondaryMonitorBars = new(); // マルチモニター用
     private ImeMonitor? _imeMonitor;
     private Settings _settings;
     private SettingsWindow? _settingsWindow;
     private Updater? _updater;
+    private HotkeyManager? _hotkeyManager;
+    private bool _barsVisible = true; // バーの表示状態
 
     // 現在の色設定
     private System.Windows.Media.Color _imeOffColor;
     private System.Windows.Media.Color _imeOnColor;
+
+    // トレイアイコン（IME状態で切り替え）
+    private System.Drawing.Icon? _imeOffIcon;
+    private System.Drawing.Icon? _imeOnIcon;
+    private bool _currentImeState = false;
 
     public App()
     {
@@ -92,9 +100,13 @@ public partial class App : System.Windows.Application
                 Logger.Log($"[App] Build type detection: exePath={exePath}, hasDll={hasDll}, buildType={buildType}");
                 versionText = $" {versionNumber}{buildType}";
             }
+
+            // トレイアイコンを初期化
+            InitializeTrayIcons();
+
             _notifyIcon = new NotifyIcon
             {
-                Icon = new System.Drawing.Icon(SystemIcons.Information, 40, 40),
+                Icon = _imeOffIcon ?? new System.Drawing.Icon(SystemIcons.Information, 40, 40),
                 Visible = true,
                 Text = $"{LocalizationHelper.TrayTooltip}{versionText}"
             };
@@ -147,6 +159,9 @@ public partial class App : System.Windows.Application
                 Logger.Log("Auto-updater disabled");
             }
 
+            // ホットキーを初期化
+            InitializeHotkeys();
+
             Logger.Log("OnStartup completed successfully");
         }
         catch (Exception ex)
@@ -164,34 +179,78 @@ public partial class App : System.Windows.Application
 
     private void CreateColorBars()
     {
+        // プライマリモニター用バー（screenIndex = 0）
         if (_settings.ShowTopBar && _settings.TopBarHeight > 0)
         {
-            _topBar = new ColorBarWindow(ScreenEdge.Top, _settings.TopBarHeight);
+            _topBar = new ColorBarWindow(ScreenEdge.Top, _settings.TopBarHeight, 0);
             _topBar.Show();
         }
 
         if (_settings.ShowBottomBar && _settings.BottomBarHeight > 0)
         {
-            _bottomBar = new ColorBarWindow(ScreenEdge.Bottom, _settings.BottomBarHeight);
+            _bottomBar = new ColorBarWindow(ScreenEdge.Bottom, _settings.BottomBarHeight, 0);
             _bottomBar.Show();
         }
 
         if (_settings.ShowLeftBar && _settings.LeftBarWidth > 0)
         {
-            _leftBar = new ColorBarWindow(ScreenEdge.Left, _settings.LeftBarWidth);
+            _leftBar = new ColorBarWindow(ScreenEdge.Left, _settings.LeftBarWidth, 0);
             _leftBar.Show();
         }
 
         if (_settings.ShowRightBar && _settings.RightBarWidth > 0)
         {
-            _rightBar = new ColorBarWindow(ScreenEdge.Right, _settings.RightBarWidth);
+            _rightBar = new ColorBarWindow(ScreenEdge.Right, _settings.RightBarWidth, 0);
             _rightBar.Show();
         }
 
         if (_settings.ShowTaskbarTopBar && _settings.TaskbarTopBarHeight > 0)
         {
-            _taskbarTopBar = new ColorBarWindow(ScreenEdge.TaskbarTop, _settings.TaskbarTopBarHeight);
+            _taskbarTopBar = new ColorBarWindow(ScreenEdge.TaskbarTop, _settings.TaskbarTopBarHeight, 0);
             _taskbarTopBar.Show();
+        }
+
+        // マルチモニター対応: セカンダリモニター用バー
+        if (_settings.ShowOnAllMonitors)
+        {
+            CreateSecondaryMonitorBars();
+        }
+    }
+
+    private void CreateSecondaryMonitorBars()
+    {
+        int screenCount = ColorBarWindow.ScreenCount;
+        Logger.Log($"[MultiMonitor] Creating bars for {screenCount - 1} secondary monitors");
+
+        for (int i = 1; i < screenCount; i++)
+        {
+            if (_settings.ShowTopBar && _settings.TopBarHeight > 0)
+            {
+                var bar = new ColorBarWindow(ScreenEdge.Top, _settings.TopBarHeight, i);
+                bar.Show();
+                _secondaryMonitorBars.Add(bar);
+            }
+
+            if (_settings.ShowBottomBar && _settings.BottomBarHeight > 0)
+            {
+                var bar = new ColorBarWindow(ScreenEdge.Bottom, _settings.BottomBarHeight, i);
+                bar.Show();
+                _secondaryMonitorBars.Add(bar);
+            }
+
+            if (_settings.ShowLeftBar && _settings.LeftBarWidth > 0)
+            {
+                var bar = new ColorBarWindow(ScreenEdge.Left, _settings.LeftBarWidth, i);
+                bar.Show();
+                _secondaryMonitorBars.Add(bar);
+            }
+
+            if (_settings.ShowRightBar && _settings.RightBarWidth > 0)
+            {
+                var bar = new ColorBarWindow(ScreenEdge.Right, _settings.RightBarWidth, i);
+                bar.Show();
+                _secondaryMonitorBars.Add(bar);
+            }
         }
     }
 
@@ -211,6 +270,13 @@ public partial class App : System.Windows.Application
 
         _taskbarTopBar?.Close();
         _taskbarTopBar = null;
+
+        // セカンダリモニター用バーを閉じる
+        foreach (var bar in _secondaryMonitorBars)
+        {
+            bar.Close();
+        }
+        _secondaryMonitorBars.Clear();
     }
 
     private void SetAllBarsColor(System.Windows.Media.Color color)
@@ -220,11 +286,99 @@ public partial class App : System.Windows.Application
         _leftBar?.SetColor(color);
         _rightBar?.SetColor(color);
         _taskbarTopBar?.SetColor(color);
+
+        // セカンダリモニター用バーも更新
+        foreach (var bar in _secondaryMonitorBars)
+        {
+            bar.SetColor(color);
+        }
     }
 
     private void OnImeStateChanged(object? sender, bool isImeOn)
     {
+        _currentImeState = isImeOn;
         SetAllBarsColor(isImeOn ? _imeOnColor : _imeOffColor);
+        UpdateTrayIcon(isImeOn);
+    }
+
+    private void InitializeTrayIcons()
+    {
+        // カスタムアイコンがあれば使用、なければ色から動的生成
+        _imeOffIcon = TrayIconHelper.LoadCustomIcon(_settings.CustomImeOffIconPath)
+                      ?? (_settings.UseDynamicTrayIcon ? TrayIconHelper.CreateColoredIcon(_imeOffColor) : null);
+        _imeOnIcon = TrayIconHelper.LoadCustomIcon(_settings.CustomImeOnIconPath)
+                     ?? (_settings.UseDynamicTrayIcon ? TrayIconHelper.CreateColoredIcon(_imeOnColor) : null);
+
+        Logger.Log($"[TrayIcon] Initialized - UseDynamic={_settings.UseDynamicTrayIcon}, OffIcon={(_imeOffIcon != null)}, OnIcon={(_imeOnIcon != null)}");
+    }
+
+    private void UpdateTrayIcon(bool isImeOn)
+    {
+        if (_notifyIcon == null) return;
+
+        var icon = isImeOn ? _imeOnIcon : _imeOffIcon;
+        if (icon != null)
+        {
+            _notifyIcon.Icon = icon;
+        }
+    }
+
+    private void InitializeHotkeys()
+    {
+        if (!_settings.EnableHotkeys)
+        {
+            Logger.Log("[Hotkey] Hotkeys disabled");
+            return;
+        }
+
+        try
+        {
+            _hotkeyManager = new HotkeyManager();
+            _hotkeyManager.Initialize();
+
+            _hotkeyManager.ToggleBarsRequested += (s, e) => Dispatcher.Invoke(ToggleBarsVisibility);
+            _hotkeyManager.OpenSettingsRequested += (s, e) => Dispatcher.Invoke(ShowSettings);
+
+            bool toggle = _hotkeyManager.RegisterHotkey(HotkeyManager.HOTKEY_TOGGLE_BARS, _settings.ToggleBarsHotkey);
+            bool settings = _hotkeyManager.RegisterHotkey(HotkeyManager.HOTKEY_OPEN_SETTINGS, _settings.OpenSettingsHotkey);
+
+            Logger.Log($"[Hotkey] Registration: ToggleBars({_settings.ToggleBarsHotkey})={toggle}, OpenSettings({_settings.OpenSettingsHotkey})={settings}");
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError("[Hotkey] Failed to initialize", ex);
+        }
+    }
+
+    private void ToggleBarsVisibility()
+    {
+        _barsVisible = !_barsVisible;
+        Logger.Log($"[Hotkey] Toggling bars visibility: {_barsVisible}");
+
+        if (_barsVisible)
+        {
+            _topBar?.Show();
+            _bottomBar?.Show();
+            _leftBar?.Show();
+            _rightBar?.Show();
+            _taskbarTopBar?.Show();
+            foreach (var bar in _secondaryMonitorBars)
+            {
+                bar.Show();
+            }
+        }
+        else
+        {
+            _topBar?.Hide();
+            _bottomBar?.Hide();
+            _leftBar?.Hide();
+            _rightBar?.Hide();
+            _taskbarTopBar?.Hide();
+            foreach (var bar in _secondaryMonitorBars)
+            {
+                bar.Hide();
+            }
+        }
     }
 
     private void ShowSettings()
@@ -256,6 +410,11 @@ public partial class App : System.Windows.Application
             _settings.SetImeOffColor(_imeOffColor);
             _settings.SetImeOnColor(_imeOnColor);
             _settings.AutoStart = _settingsWindow.AutoStartEnabled;
+            _settings.ShowOnAllMonitors = _settingsWindow.ShowOnAllMonitors;
+            _settings.UseDynamicTrayIcon = _settingsWindow.UseDynamicTrayIcon;
+            _settings.EnableHotkeys = _settingsWindow.EnableHotkeys;
+            _settings.ToggleBarsHotkey = _settingsWindow.ToggleBarsHotkey;
+            _settings.OpenSettingsHotkey = _settingsWindow.OpenSettingsHotkey;
 
             // 自動更新設定が変更された場合、Updaterを再起動
             var autoUpdateChanged = _settings.AutoUpdate != _settingsWindow.AutoUpdateEnabled;
@@ -299,6 +458,10 @@ public partial class App : System.Windows.Application
             CreateColorBars();
             SetAllBarsColor(_imeOffColor);
 
+            // トレイアイコンを再初期化
+            InitializeTrayIcons();
+            UpdateTrayIcon(_currentImeState);
+
             // 設定画面の参照をクリア
             _settingsWindow = null;
         };
@@ -308,6 +471,7 @@ public partial class App : System.Windows.Application
 
     protected override void OnExit(ExitEventArgs e)
     {
+        _hotkeyManager?.Dispose();
         _imeMonitor?.Stop();
         _updater?.StopBackgroundChecker();
         _updater?.Dispose();

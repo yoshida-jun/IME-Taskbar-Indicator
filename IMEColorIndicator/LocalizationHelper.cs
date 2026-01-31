@@ -94,6 +94,22 @@ namespace IMEColorIndicator
         public static string BarHeightLabel => IsJapanese ? "高さ (px):" : "Height (px):";
         public static string BarWidthLabel => IsJapanese ? "幅 (px):" : "Width (px):";
         public static string PresetColorsLabel => IsJapanese ? "プリセットカラー:" : "Preset Colors:";
+
+        // マルチモニター設定
+        public static string MultiMonitorSettingsLabel => IsJapanese ? "マルチモニター設定" : "Multi-Monitor Settings";
+        public static string ShowOnAllMonitors => IsJapanese ? "すべてのモニターにカラーバーを表示" : "Show color bars on all monitors";
+        public static string MonitorCountFormat => IsJapanese ? "検出されたモニター数: {0}" : "Detected monitors: {0}";
+
+        // トレイアイコン設定
+        public static string TrayIconSettingsLabel => IsJapanese ? "トレイアイコン設定" : "Tray Icon Settings";
+        public static string UseDynamicTrayIcon => IsJapanese ? "IME状態に応じてアイコン色を変更" : "Change icon color based on IME state";
+
+        // ホットキー設定
+        public static string HotkeySettingsLabel => IsJapanese ? "ホットキー設定" : "Hotkey Settings";
+        public static string EnableHotkeys => IsJapanese ? "ホットキーを有効にする" : "Enable hotkeys";
+        public static string HotkeyRequiresRestart => IsJapanese ? "※ 変更を適用するにはアプリの再起動が必要です" : "※ Restart required to apply changes";
+        public static string ToggleBarsHotkey => IsJapanese ? "バー表示切替:" : "Toggle bars:";
+        public static string OpenSettingsHotkey => IsJapanese ? "設定を開く:" : "Open settings:";
         public static string OkButton => IsJapanese ? "OK" : "OK";
         public static string CancelButton => IsJapanese ? "キャンセル" : "Cancel";
 
