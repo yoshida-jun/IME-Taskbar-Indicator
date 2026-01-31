@@ -82,9 +82,14 @@ public partial class App : System.Windows.Application
             if (version != null)
             {
                 var versionNumber = $"v{version.Major}.{version.Minor}.{version.Build}";
-                // Single-file publish（GitHub版）の場合、Locationは空文字列になる
-                var isPublished = string.IsNullOrEmpty(System.Reflection.Assembly.GetExecutingAssembly().Location);
-                var buildType = isPublished ? "" : "-dev";
+                // Single-file publish（GitHub版）かローカルビルドかを判定
+                // Single-file publishの場合、同じフォルダにDLLファイルが存在しない
+                var exePath = Environment.ProcessPath ?? "";
+                var exeDir = System.IO.Path.GetDirectoryName(exePath) ?? "";
+                var hasDll = System.IO.Directory.Exists(exeDir) &&
+                             System.IO.Directory.GetFiles(exeDir, "*.dll").Length > 0;
+                var buildType = hasDll ? "-dev" : "";
+                Logger.Log($"[App] Build type detection: exePath={exePath}, hasDll={hasDll}, buildType={buildType}");
                 versionText = $" {versionNumber}{buildType}";
             }
             _notifyIcon = new NotifyIcon
