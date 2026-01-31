@@ -17,6 +17,8 @@ public enum ScreenEdge
 
 public partial class ColorBarWindow : Window
 {
+    public static int ScreenCount => System.Windows.Forms.Screen.AllScreens.Length;
+
     private const int GWL_EXSTYLE = -20;
     private const int WS_EX_TRANSPARENT = 0x00000020;
     private const int WS_EX_TOOLWINDOW = 0x00000080;
@@ -37,18 +39,30 @@ public partial class ColorBarWindow : Window
 
     private ScreenEdge _edge;
     private int _size; // 幅または高さ（ピクセル）
+    private int _screenIndex; // モニター番号 (0 = プライマリ)
     private DispatcherTimer? _topmostTimer;
 
-    public ColorBarWindow(ScreenEdge edge, int size)
+    public ColorBarWindow(ScreenEdge edge, int size, int screenIndex = 0)
     {
         InitializeComponent();
         _edge = edge;
         _size = size;
+        _screenIndex = screenIndex;
         SetupWindow();
         StartTopmostTimer();
 
         // 解像度変更を監視
         SystemEvents.DisplaySettingsChanged += OnDisplaySettingsChanged;
+    }
+
+    private System.Drawing.Rectangle GetScreenBounds()
+    {
+        var screens = System.Windows.Forms.Screen.AllScreens;
+        if (_screenIndex >= 0 && _screenIndex < screens.Length)
+        {
+            return screens[_screenIndex].Bounds;
+        }
+        return System.Windows.Forms.Screen.PrimaryScreen?.Bounds ?? new System.Drawing.Rectangle(0, 0, 1920, 1080);
     }
 
     private void OnDisplaySettingsChanged(object? sender, EventArgs e)
@@ -63,36 +77,35 @@ public partial class ColorBarWindow : Window
 
     private void SetupWindow()
     {
-        // 画面の幅と高さを取得
-        var screenWidth = SystemParameters.PrimaryScreenWidth;
-        var screenHeight = SystemParameters.PrimaryScreenHeight;
+        // スクリーン情報を取得
+        var bounds = GetScreenBounds();
 
         // 辺に応じてウィンドウを配置
         switch (_edge)
         {
             case ScreenEdge.Top:
-                Left = 0;
-                Top = 0;
-                Width = screenWidth;
+                Left = bounds.X;
+                Top = bounds.Y;
+                Width = bounds.Width;
                 Height = _size;
                 break;
             case ScreenEdge.Bottom:
-                Left = 0;
-                Top = screenHeight - _size;
-                Width = screenWidth;
+                Left = bounds.X;
+                Top = bounds.Y + bounds.Height - _size;
+                Width = bounds.Width;
                 Height = _size;
                 break;
             case ScreenEdge.Left:
-                Left = 0;
-                Top = 0;
+                Left = bounds.X;
+                Top = bounds.Y;
                 Width = _size;
-                Height = screenHeight;
+                Height = bounds.Height;
                 break;
             case ScreenEdge.Right:
-                Left = screenWidth - _size;
-                Top = 0;
+                Left = bounds.X + bounds.Width - _size;
+                Top = bounds.Y;
                 Width = _size;
-                Height = screenHeight;
+                Height = bounds.Height;
                 break;
             case ScreenEdge.TaskbarTop:
                 var taskbarInfo = TaskbarHelper.GetTaskbarInfo();
@@ -120,36 +133,35 @@ public partial class ColorBarWindow : Window
     {
         _size = size;
 
-        // 画面の幅と高さを取得
-        var screenWidth = SystemParameters.PrimaryScreenWidth;
-        var screenHeight = SystemParameters.PrimaryScreenHeight;
+        // スクリーン情報を取得
+        var bounds = GetScreenBounds();
 
         // 辺に応じてウィンドウをリサイズ・再配置
         switch (_edge)
         {
             case ScreenEdge.Top:
-                Left = 0;
-                Top = 0;
-                Width = screenWidth;
+                Left = bounds.X;
+                Top = bounds.Y;
+                Width = bounds.Width;
                 Height = _size;
                 break;
             case ScreenEdge.Bottom:
-                Left = 0;
-                Top = screenHeight - _size;
-                Width = screenWidth;
+                Left = bounds.X;
+                Top = bounds.Y + bounds.Height - _size;
+                Width = bounds.Width;
                 Height = _size;
                 break;
             case ScreenEdge.Left:
-                Left = 0;
-                Top = 0;
+                Left = bounds.X;
+                Top = bounds.Y;
                 Width = _size;
-                Height = screenHeight;
+                Height = bounds.Height;
                 break;
             case ScreenEdge.Right:
-                Left = screenWidth - _size;
-                Top = 0;
+                Left = bounds.X + bounds.Width - _size;
+                Top = bounds.Y;
                 Width = _size;
-                Height = screenHeight;
+                Height = bounds.Height;
                 break;
             case ScreenEdge.TaskbarTop:
                 var taskbarInfo = TaskbarHelper.GetTaskbarInfo();

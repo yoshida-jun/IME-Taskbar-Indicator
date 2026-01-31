@@ -12,6 +12,16 @@ public class Settings
     public bool AutoUpdate { get; set; } = false; // 自動更新（デフォルトは無効）
     public string Language { get; set; } = "Auto"; // 言語設定: "Auto", "Japanese", "English"
 
+    // トレイアイコン設定
+    public bool UseDynamicTrayIcon { get; set; } = true; // IME状態に応じてアイコンを変更
+    public string? CustomImeOffIconPath { get; set; } = null; // IME OFF時のカスタムアイコンパス
+    public string? CustomImeOnIconPath { get; set; } = null;  // IME ON時のカスタムアイコンパス
+
+    // ホットキー設定
+    public bool EnableHotkeys { get; set; } = false; // ホットキーを有効にする
+    public string ToggleBarsHotkey { get; set; } = "Ctrl+Shift+F11"; // バー表示切り替えホットキー
+    public string OpenSettingsHotkey { get; set; } = "Ctrl+Shift+F12"; // 設定画面を開くホットキー
+
     // 各辺のバーサイズ
     public int TopBarHeight { get; set; } = 2;     // デフォルト2px
     public int BottomBarHeight { get; set; } = 10; // デフォルト10px
@@ -25,6 +35,9 @@ public class Settings
     public bool ShowLeftBar { get; set; } = true;
     public bool ShowRightBar { get; set; } = true;
     public bool ShowTaskbarTopBar { get; set; } = false; // デフォルトは非表示
+
+    // マルチモニター設定
+    public bool ShowOnAllMonitors { get; set; } = false; // 全モニターに表示
 
     // 後方互換性のため残す
     public int BarHeight { get; set; } = 10;

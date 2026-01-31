@@ -12,6 +12,11 @@ public partial class SettingsWindow : Window
     public System.Windows.Media.Color ImeOnColor { get; private set; }
     public bool AutoStartEnabled { get; private set; }
     public bool AutoUpdateEnabled { get; private set; }
+    public bool ShowOnAllMonitors { get; private set; }
+    public bool UseDynamicTrayIcon { get; private set; }
+    public bool EnableHotkeys { get; private set; }
+    public string ToggleBarsHotkey { get; private set; }
+    public string OpenSettingsHotkey { get; private set; }
 
     private enum ColorTarget
     {
@@ -36,12 +41,36 @@ public partial class SettingsWindow : Window
         ImeOnColor = currentOnColor;
         AutoStartEnabled = autoStartEnabled;
         AutoUpdateEnabled = settings.AutoUpdate;
+        ShowOnAllMonitors = settings.ShowOnAllMonitors;
+        UseDynamicTrayIcon = settings.UseDynamicTrayIcon;
+        EnableHotkeys = settings.EnableHotkeys;
+        ToggleBarsHotkey = settings.ToggleBarsHotkey;
+        OpenSettingsHotkey = settings.OpenSettingsHotkey;
         _settings = settings;
         _colorBars = colorBars;
 
         // 初期値を設定
         ChkAutoStart.IsChecked = autoStartEnabled;
         ChkAutoUpdate.IsChecked = settings.AutoUpdate;
+        ChkShowOnAllMonitors.IsChecked = settings.ShowOnAllMonitors;
+        ChkShowOnAllMonitors.Content = LocalizationHelper.ShowOnAllMonitors;
+
+        // モニター数を表示
+        int monitorCount = ColorBarWindow.ScreenCount;
+        TxtMonitorCount.Text = string.Format(LocalizationHelper.MonitorCountFormat, monitorCount);
+
+        // トレイアイコン設定
+        ChkUseDynamicTrayIcon.IsChecked = settings.UseDynamicTrayIcon;
+        ChkUseDynamicTrayIcon.Content = LocalizationHelper.UseDynamicTrayIcon;
+
+        // ホットキー設定
+        ChkEnableHotkeys.IsChecked = settings.EnableHotkeys;
+        ChkEnableHotkeys.Content = LocalizationHelper.EnableHotkeys;
+        TxtToggleBarsHotkeyValue.Text = settings.ToggleBarsHotkey;
+        TxtOpenSettingsHotkeyValue.Text = settings.OpenSettingsHotkey;
+        TxtToggleBarsHotkey.Text = LocalizationHelper.ToggleBarsHotkey;
+        TxtOpenSettingsHotkey.Text = LocalizationHelper.OpenSettingsHotkey;
+        TxtHotkeyNote.Text = LocalizationHelper.HotkeyRequiresRestart;
 
         // 言語設定の初期化
         CmbLanguage.SelectedIndex = settings.Language switch
@@ -72,6 +101,11 @@ public partial class SettingsWindow : Window
         {
             AutoStartEnabled = ChkAutoStart.IsChecked ?? false;
             AutoUpdateEnabled = ChkAutoUpdate.IsChecked ?? false;
+            ShowOnAllMonitors = ChkShowOnAllMonitors.IsChecked ?? false;
+            UseDynamicTrayIcon = ChkUseDynamicTrayIcon.IsChecked ?? true;
+            EnableHotkeys = ChkEnableHotkeys.IsChecked ?? false;
+            ToggleBarsHotkey = TxtToggleBarsHotkeyValue.Text;
+            OpenSettingsHotkey = TxtOpenSettingsHotkeyValue.Text;
             AutoStartHelper.SetAutoStart(AutoStartEnabled);
         };
     }
@@ -188,190 +222,99 @@ public partial class SettingsWindow : Window
         }
     }
 
-    private void BtnSelectOffColor_Click(object sender, RoutedEventArgs e)
+    private void BtnSelectOffColor_Click(object sender, RoutedEventArgs e) =>
+        ShowColorDialog(ColorTarget.ImeOff);
+
+    private void BtnSelectOnColor_Click(object sender, RoutedEventArgs e) =>
+        ShowColorDialog(ColorTarget.ImeOn);
+
+    private void ShowColorDialog(ColorTarget target)
     {
-        _lastSelectedTarget = ColorTarget.ImeOff;
+        _lastSelectedTarget = target;
+        var currentColor = target == ColorTarget.ImeOff ? ImeOffColor : ImeOnColor;
         var dialog = new System.Windows.Forms.ColorDialog
         {
-            Color = System.Drawing.Color.FromArgb(ImeOffColor.A, ImeOffColor.R, ImeOffColor.G, ImeOffColor.B),
+            Color = System.Drawing.Color.FromArgb(currentColor.A, currentColor.R, currentColor.G, currentColor.B),
             FullOpen = true
         };
 
         if (dialog.ShowDialog() == System.Windows.Forms.DialogResult.OK)
         {
-            ImeOffColor = System.Windows.Media.Color.FromArgb(dialog.Color.A, dialog.Color.R, dialog.Color.G, dialog.Color.B);
+            var newColor = System.Windows.Media.Color.FromArgb(
+                dialog.Color.A, dialog.Color.R, dialog.Color.G, dialog.Color.B);
+            if (target == ColorTarget.ImeOff)
+                ImeOffColor = newColor;
+            else
+                ImeOnColor = newColor;
             UpdatePreview();
         }
     }
 
-    private void BtnSelectOnColor_Click(object sender, RoutedEventArgs e)
-    {
-        _lastSelectedTarget = ColorTarget.ImeOn;
-        var dialog = new System.Windows.Forms.ColorDialog
-        {
-            Color = System.Drawing.Color.FromArgb(ImeOnColor.A, ImeOnColor.R, ImeOnColor.G, ImeOnColor.B),
-            FullOpen = true
-        };
+    private void ChkShowTop_CheckedChanged(object sender, RoutedEventArgs e) =>
+        ToggleBarVisibility(0, ScreenEdge.Top, ChkShowTop.IsChecked ?? true,
+            _settings.TopBarHeight, v => _settings.ShowTopBar = v);
 
-        if (dialog.ShowDialog() == System.Windows.Forms.DialogResult.OK)
-        {
-            ImeOnColor = System.Windows.Media.Color.FromArgb(dialog.Color.A, dialog.Color.R, dialog.Color.G, dialog.Color.B);
-            UpdatePreview();
-        }
-    }
+    private void ChkShowBottom_CheckedChanged(object sender, RoutedEventArgs e) =>
+        ToggleBarVisibility(1, ScreenEdge.Bottom, ChkShowBottom.IsChecked ?? true,
+            _settings.BottomBarHeight, v => _settings.ShowBottomBar = v);
 
-    private void ChkShowTop_CheckedChanged(object sender, RoutedEventArgs e)
+    private void ChkShowLeft_CheckedChanged(object sender, RoutedEventArgs e) =>
+        ToggleBarVisibility(2, ScreenEdge.Left, ChkShowLeft.IsChecked ?? true,
+            _settings.LeftBarWidth, v => _settings.ShowLeftBar = v);
+
+    private void ChkShowRight_CheckedChanged(object sender, RoutedEventArgs e) =>
+        ToggleBarVisibility(3, ScreenEdge.Right, ChkShowRight.IsChecked ?? true,
+            _settings.RightBarWidth, v => _settings.ShowRightBar = v);
+
+    private void ToggleBarVisibility(int index, ScreenEdge edge, bool show, int size, Action<bool> updateSetting)
     {
         if (_settings == null || _colorBars == null) return;
-        _settings.ShowTopBar = ChkShowTop.IsChecked ?? true;
+        updateSetting(show);
 
-        if (_settings.ShowTopBar)
+        if (show)
         {
-            if (_colorBars[0] == null && _settings.TopBarHeight > 0)
+            if (_colorBars[index] == null && size > 0)
             {
-                var bar = new ColorBarWindow(ScreenEdge.Top, _settings.TopBarHeight);
+                var bar = new ColorBarWindow(edge, size);
                 bar.SetColor(ImeOffColor);
-                _colorBars[0] = bar;
+                _colorBars[index] = bar;
             }
-            _colorBars[0]?.Show();
+            _colorBars[index]?.Show();
         }
         else
         {
-            _colorBars[0]?.Hide();
+            _colorBars[index]?.Hide();
         }
         UpdateDisplayPreview();
     }
 
-    private void ChkShowBottom_CheckedChanged(object sender, RoutedEventArgs e)
-    {
-        if (_settings == null || _colorBars == null) return;
-        _settings.ShowBottomBar = ChkShowBottom.IsChecked ?? true;
+    private void SliderTopHeight_ValueChanged(object sender, RoutedPropertyChangedEventArgs<double> e) =>
+        UpdateBarSize(0, SliderTopHeight, v => _settings.TopBarHeight = v);
 
-        if (_settings.ShowBottomBar)
-        {
-            if (_colorBars[1] == null && _settings.BottomBarHeight > 0)
-            {
-                var bar = new ColorBarWindow(ScreenEdge.Bottom, _settings.BottomBarHeight);
-                bar.SetColor(ImeOffColor);
-                _colorBars[1] = bar;
-            }
-            _colorBars[1]?.Show();
-        }
-        else
-        {
-            _colorBars[1]?.Hide();
-        }
+    private void SliderBottomHeight_ValueChanged(object sender, RoutedPropertyChangedEventArgs<double> e) =>
+        UpdateBarSize(1, SliderBottomHeight, v => _settings.BottomBarHeight = v);
+
+    private void SliderLeftWidth_ValueChanged(object sender, RoutedPropertyChangedEventArgs<double> e) =>
+        UpdateBarSize(2, SliderLeftWidth, v => _settings.LeftBarWidth = v);
+
+    private void SliderRightWidth_ValueChanged(object sender, RoutedPropertyChangedEventArgs<double> e) =>
+        UpdateBarSize(3, SliderRightWidth, v => _settings.RightBarWidth = v);
+
+    private void UpdateBarSize(int index, Slider? slider, Action<int> updateSetting)
+    {
+        if (slider == null || _colorBars == null) return;
+        var size = (int)slider.Value;
+        updateSetting(size);
+        _colorBars[index]?.SetSize(size);
         UpdateDisplayPreview();
     }
 
-    private void ChkShowLeft_CheckedChanged(object sender, RoutedEventArgs e)
-    {
-        if (_settings == null || _colorBars == null) return;
-        _settings.ShowLeftBar = ChkShowLeft.IsChecked ?? true;
+    private void ChkShowTaskbarTop_CheckedChanged(object sender, RoutedEventArgs e) =>
+        ToggleBarVisibility(4, ScreenEdge.TaskbarTop, ChkShowTaskbarTop.IsChecked ?? false,
+            _settings.TaskbarTopBarHeight, v => _settings.ShowTaskbarTopBar = v);
 
-        if (_settings.ShowLeftBar)
-        {
-            if (_colorBars[2] == null && _settings.LeftBarWidth > 0)
-            {
-                var bar = new ColorBarWindow(ScreenEdge.Left, _settings.LeftBarWidth);
-                bar.SetColor(ImeOffColor);
-                _colorBars[2] = bar;
-            }
-            _colorBars[2]?.Show();
-        }
-        else
-        {
-            _colorBars[2]?.Hide();
-        }
-        UpdateDisplayPreview();
-    }
-
-    private void ChkShowRight_CheckedChanged(object sender, RoutedEventArgs e)
-    {
-        if (_settings == null || _colorBars == null) return;
-        _settings.ShowRightBar = ChkShowRight.IsChecked ?? true;
-
-        if (_settings.ShowRightBar)
-        {
-            if (_colorBars[3] == null && _settings.RightBarWidth > 0)
-            {
-                var bar = new ColorBarWindow(ScreenEdge.Right, _settings.RightBarWidth);
-                bar.SetColor(ImeOffColor);
-                _colorBars[3] = bar;
-            }
-            _colorBars[3]?.Show();
-        }
-        else
-        {
-            _colorBars[3]?.Hide();
-        }
-        UpdateDisplayPreview();
-    }
-
-    private void SliderTopHeight_ValueChanged(object sender, RoutedPropertyChangedEventArgs<double> e)
-    {
-        if (SliderTopHeight == null || _colorBars == null) return;
-        _settings.TopBarHeight = (int)SliderTopHeight.Value;
-        _colorBars[0]?.SetSize(_settings.TopBarHeight);
-        UpdateDisplayPreview();
-    }
-
-    private void SliderBottomHeight_ValueChanged(object sender, RoutedPropertyChangedEventArgs<double> e)
-    {
-        if (SliderBottomHeight == null || _colorBars == null) return;
-        _settings.BottomBarHeight = (int)SliderBottomHeight.Value;
-        _colorBars[1]?.SetSize(_settings.BottomBarHeight);
-        UpdateDisplayPreview();
-    }
-
-    private void SliderLeftWidth_ValueChanged(object sender, RoutedPropertyChangedEventArgs<double> e)
-    {
-        if (SliderLeftWidth == null || _colorBars == null) return;
-        _settings.LeftBarWidth = (int)SliderLeftWidth.Value;
-        _colorBars[2]?.SetSize(_settings.LeftBarWidth);
-        UpdateDisplayPreview();
-    }
-
-    private void SliderRightWidth_ValueChanged(object sender, RoutedPropertyChangedEventArgs<double> e)
-    {
-        if (SliderRightWidth == null || _colorBars == null) return;
-        _settings.RightBarWidth = (int)SliderRightWidth.Value;
-        _colorBars[3]?.SetSize(_settings.RightBarWidth);
-        UpdateDisplayPreview();
-    }
-
-    private void ChkShowTaskbarTop_CheckedChanged(object sender, RoutedEventArgs e)
-    {
-        if (_settings == null || _colorBars == null) return;
-        _settings.ShowTaskbarTopBar = ChkShowTaskbarTop.IsChecked ?? false;
-
-        // リアルタイムでバーを表示/非表示
-        if (_settings.ShowTaskbarTopBar)
-        {
-            // バーが存在しない場合は新規作成
-            if (_colorBars[4] == null && _settings.TaskbarTopBarHeight > 0)
-            {
-                var bar = new ColorBarWindow(ScreenEdge.TaskbarTop, _settings.TaskbarTopBarHeight);
-                bar.SetColor(ImeOffColor);
-                _colorBars[4] = bar;
-            }
-
-            // バーを表示
-            _colorBars[4]?.Show();
-        }
-        else
-        {
-            // バーを非表示
-            _colorBars[4]?.Hide();
-        }
-    }
-
-    private void SliderTaskbarTopHeight_ValueChanged(object sender, RoutedPropertyChangedEventArgs<double> e)
-    {
-        if (SliderTaskbarTopHeight == null || _colorBars == null) return;
-        _settings.TaskbarTopBarHeight = (int)SliderTaskbarTopHeight.Value;
-        _colorBars[4]?.SetSize(_settings.TaskbarTopBarHeight);
-    }
+    private void SliderTaskbarTopHeight_ValueChanged(object sender, RoutedPropertyChangedEventArgs<double> e) =>
+        UpdateBarSize(4, SliderTaskbarTopHeight, v => _settings.TaskbarTopBarHeight = v);
 
     private void ImeOffPreview_MouseDown(object sender, MouseButtonEventArgs e)
     {
