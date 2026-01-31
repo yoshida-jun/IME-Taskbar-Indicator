@@ -17,6 +17,7 @@ IMEの状態（ON/OFF）を画面端のカラーバーで視覚的に表示す�
 - **IME状態を色で表示**: IMEのON/OFFを画面端のカラーバーで表示
 - **自由にカスタマイズ**: 色とバーの位置・サイズを自由に設定
 - **邪魔にならない**: カラーバーはクリックを透過し、操作を妨げません
+- **解像度変更に対応**: ディスプレイの解像度変更時に自動で再配置
 - **自動起動対応**: Windows起動時に自動起動できます
 - **多言語対応**: 日本語・英語に対応（自動検出または手動切替）
 - **自動更新**: 最新版を自動でチェック・ダウンロード（設定でON/OFF可能）
@@ -46,7 +47,7 @@ IMEの状態（ON/OFF）を画面端のカラーバーで視覚的に表示す�
 ## システム要件
 
 - **OS**: Windows 10 / Windows 11
-- **.NET**: 10.0 Runtime（含まれています、別途インストール不要）
+- **.NET**: 9.0 Runtime（含まれています、別途インストール不要）
 
 ## よくある質問
 
@@ -92,6 +93,7 @@ Just run the downloaded file. No installation required.
 - **Visual IME Status**: Display IME ON/OFF with color bars at screen edges
 - **Fully Customizable**: Freely configure colors and bar position/size
 - **Non-Intrusive**: Color bars are click-through and don't interfere
+- **Resolution Change Support**: Automatically repositions on display resolution changes
 - **Auto-Start Support**: Can launch automatically at Windows startup
 - **Multi-Language**: Japanese/English support (auto-detect or manual switch)
 - **Auto-Update**: Automatic check and download of latest version (toggleable)
@@ -121,7 +123,7 @@ Right-click the tray icon → **"Exit"**
 ## System Requirements
 
 - **OS**: Windows 10 / Windows 11
-- **.NET**: 10.0 Runtime (included, no separate installation needed)
+- **.NET**: 9.0 Runtime (included, no separate installation needed)
 
 ## FAQ
 
