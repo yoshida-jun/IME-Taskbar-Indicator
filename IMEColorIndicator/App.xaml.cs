@@ -20,6 +20,8 @@ public partial class App : System.Windows.Application
     private SettingsWindow? _settingsWindow;
     private Updater? _updater;
     private HotkeyManager? _hotkeyManager;
+    private FocusMonitor? _focusMonitor;
+    private FocusUnderlineWindow? _focusUnderlineWindow;
     private bool _barsVisible = true; // バーの表示状態
 
     // 現在の色設定
@@ -83,6 +85,13 @@ public partial class App : System.Windows.Application
             // 初期色を設定
             SetAllBarsColor(_imeOffColor);
             Logger.Log("Initial colors set");
+
+            // フォーカスアンダーライン
+            if (_settings.ShowFocusUnderline)
+            {
+                StartFocusUnderline();
+                Logger.Log("FocusUnderline started");
+            }
 
             // タスクトレイアイコンを作成
             var version = System.Reflection.Assembly.GetExecutingAssembly().GetName().Version;
@@ -297,8 +306,28 @@ public partial class App : System.Windows.Application
     private void OnImeStateChanged(object? sender, bool isImeOn)
     {
         _currentImeState = isImeOn;
-        SetAllBarsColor(isImeOn ? _imeOnColor : _imeOffColor);
+        var color = isImeOn ? _imeOnColor : _imeOffColor;
+        SetAllBarsColor(color);
+        _focusUnderlineWindow?.SetColor(color);
         UpdateTrayIcon(isImeOn);
+    }
+
+    private void StartFocusUnderline()
+    {
+        _focusUnderlineWindow = new FocusUnderlineWindow(_settings.FocusUnderlineHeight);
+        _focusUnderlineWindow.SetColor(_imeOffColor);
+        _focusMonitor = new FocusMonitor(Dispatcher);
+        _focusMonitor.FocusedElementChanged += (s, rect) => _focusUnderlineWindow?.UpdatePosition(rect);
+        _focusMonitor.Start();
+    }
+
+    private void StopFocusUnderline()
+    {
+        _focusMonitor?.Stop();
+        _focusMonitor?.Dispose();
+        _focusMonitor = null;
+        _focusUnderlineWindow?.Close();
+        _focusUnderlineWindow = null;
     }
 
     private void InitializeTrayIcons()
@@ -462,6 +491,14 @@ public partial class App : System.Windows.Application
             InitializeTrayIcons();
             UpdateTrayIcon(_currentImeState);
 
+            // フォーカスアンダーライン設定の反映
+            if (_settings.ShowFocusUnderline && _focusMonitor == null)
+                StartFocusUnderline();
+            else if (!_settings.ShowFocusUnderline && _focusMonitor != null)
+                StopFocusUnderline();
+            else if (_focusUnderlineWindow != null)
+                _focusUnderlineWindow.SetHeight(_settings.FocusUnderlineHeight);
+
             // 設定画面の参照をクリア
             _settingsWindow = null;
         };
@@ -471,6 +508,7 @@ public partial class App : System.Windows.Application
 
     protected override void OnExit(ExitEventArgs e)
     {
+        StopFocusUnderline();
         _hotkeyManager?.Dispose();
         _imeMonitor?.Stop();
         _updater?.StopBackgroundChecker();

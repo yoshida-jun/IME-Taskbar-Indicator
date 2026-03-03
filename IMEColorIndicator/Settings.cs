@@ -39,6 +39,10 @@ public class Settings
     // マルチモニター設定
     public bool ShowOnAllMonitors { get; set; } = false; // 全モニターに表示
 
+    // フォーカスアンダーライン設定
+    public bool ShowFocusUnderline { get; set; } = false;
+    public int FocusUnderlineHeight { get; set; } = 3;
+
     // 後方互換性のため残す
     public int BarHeight { get; set; } = 10;
 

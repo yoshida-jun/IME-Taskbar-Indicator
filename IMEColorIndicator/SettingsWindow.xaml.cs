@@ -92,6 +92,9 @@ public partial class SettingsWindow : Window
         SliderRightWidth.Value = settings.RightBarWidth;
         SliderTaskbarTopHeight.Value = settings.TaskbarTopBarHeight;
 
+        ChkShowFocusUnderline.IsChecked = settings.ShowFocusUnderline;
+        SliderFocusUnderlineHeight.Value = settings.FocusUnderlineHeight;
+
         UpdatePreview();
         CreatePresetColors();
         UpdateDisplayPreview();
@@ -315,6 +318,18 @@ public partial class SettingsWindow : Window
 
     private void SliderTaskbarTopHeight_ValueChanged(object sender, RoutedPropertyChangedEventArgs<double> e) =>
         UpdateBarSize(4, SliderTaskbarTopHeight, v => _settings.TaskbarTopBarHeight = v);
+
+    private void ChkShowFocusUnderline_CheckedChanged(object sender, RoutedEventArgs e)
+    {
+        if (_settings == null) return;
+        _settings.ShowFocusUnderline = ChkShowFocusUnderline.IsChecked ?? false;
+    }
+
+    private void SliderFocusUnderlineHeight_ValueChanged(object sender, RoutedPropertyChangedEventArgs<double> e)
+    {
+        if (_settings == null || SliderFocusUnderlineHeight == null) return;
+        _settings.FocusUnderlineHeight = (int)SliderFocusUnderlineHeight.Value;
+    }
 
     private void ImeOffPreview_MouseDown(object sender, MouseButtonEventArgs e)
     {
